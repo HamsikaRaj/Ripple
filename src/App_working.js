@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, ScatterChart, Scatter, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { Users, DollarSign, Home, TrendingUp, AlertCircle, PlayCircle, RefreshCw, Leaf, Car, GraduationCap, Building2, MapPin, Sparkles } from 'lucide-react';
+import { Users, DollarSign, Home, TrendingUp, AlertCircle, PlayCircle, RefreshCw, Leaf, Car, GraduationCap, Building2, MapPin } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import './App.css';
-
-import { generatePolicyRecommendation, generateEquityInsights, generateEnvironmentalInsights } from './geminiService';
 
 const FairSimExplorer = () => {
   const [data, setData] = useState(null);
@@ -27,12 +25,6 @@ const FairSimExplorer = () => {
   const [simulationResults, setSimulationResults] = useState(null);
   const [monteCarloRuns, setMonteCarloRuns] = useState(100);
   const [baselineMetrics, setBaselineMetrics] = useState(null);
-
-  // 🆕 ADD THESE THREE STATE VARIABLES
-  const [aiPolicyRecommendation, setAiPolicyRecommendation] = useState(null);
-  const [aiEquityInsights, setAiEquityInsights] = useState(null);
-  const [aiEnvironmentalInsights, setAiEnvironmentalInsights] = useState(null);
-  const [loadingInsights, setLoadingInsights] = useState(false);
 
   // ==================== HELPER FUNCTIONS (defined first) ====================
   
@@ -419,10 +411,6 @@ const FairSimExplorer = () => {
     
         setSimulating(true);
     setSimulationProgress(0);
-    // 🆕 ADD THESE THREE LINES
-    setAiPolicyRecommendation(null);
-    setAiEquityInsights(null);
-    setAiEnvironmentalInsights(null);
     console.log(`🎲 Running ${monteCarloRuns} simulations...`);
     
     // ✅ NEW: Run simulation in chunks to keep UI responsive
@@ -764,8 +752,6 @@ const FairSimExplorer = () => {
         console.log('✅ Simulation complete:', simulationSummary.summary);
         setSimulating(false);
         setSimulationProgress(0);
-        // 🆕 ADD THIS LINE
-        generateAIInsights(simulationSummary);
       } catch (error) {
         console.error('❌ Error finishing simulation:', error);
         setError(`Simulation error: ${error.message}`);
@@ -776,43 +762,6 @@ const FairSimExplorer = () => {
     
     // ✅ Start the chunked processing
     setTimeout(processChunk, 100);
-  };
-
-  // 🆕 ADD THIS ENTIRE FUNCTION
-  const generateAIInsights = async (simulationSummary) => {
-    setLoadingInsights(true);
-    
-    const policySettings = {
-      minWage,
-      carbonTax,
-      housingSubsidy,
-      taxRate,
-      educationSubsidy,
-      transitSubsidy,
-      evIncentive,
-      greenJobsIncentive
-    };
-    
-    try {
-      console.log('🤖 Generating AI insights...');
-      
-      // Generate all insights in parallel
-      const [policyRec, equityInsights, envInsights] = await Promise.all([
-        generatePolicyRecommendation(simulationSummary, baselineMetrics, policySettings),
-        generateEquityInsights(simulationSummary.equityAnalysis, baselineMetrics),
-        generateEnvironmentalInsights(simulationSummary, baselineMetrics, policySettings)
-      ]);
-      
-      setAiPolicyRecommendation(policyRec);
-      setAiEquityInsights(equityInsights);
-      setAiEnvironmentalInsights(envInsights);
-      
-      console.log('✅ AI insights generated successfully');
-    } catch (error) {
-      console.error('❌ Error generating AI insights:', error);
-    } finally {
-      setLoadingInsights(false);
-    }
   };
 
   // ==================== RENDER: UPLOAD SCREEN ====================
@@ -1445,17 +1394,6 @@ const FairSimExplorer = () => {
                   <div className="bg-white rounded-xl shadow-lg p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">📊 Equity Analysis: Who Wins and Who Loses?</h3>
                     
-                    {/* 🆕 AI EQUITY INSIGHTS */}
-                    {aiEquityInsights && (
-                      <div className="mb-6 p-4 bg-purple-50 rounded-lg border-l-4 border-purple-600">
-                        <div className="flex items-center mb-2">
-                          <Sparkles className="w-5 h-5 text-purple-600 mr-2" />
-                          <h4 className="font-bold text-gray-900">AI Equity Insights</h4>
-                        </div>
-                        <p className="text-gray-700 leading-relaxed">{aiEquityInsights}</p>
-                      </div>
-                    )}
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* By Income Bracket */}
                       <div>
@@ -1540,34 +1478,19 @@ const FairSimExplorer = () => {
                   </div>
                 )}
 
-                {/* 🆕 AI-POWERED POLICY RECOMMENDATION */}
+                {/* Policy Recommendation */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
-                  <div className="flex items-center mb-3">
-                    <Sparkles className="w-6 h-6 text-blue-600 mr-2" />
-                    <h3 className="text-xl font-bold text-gray-900">AI Policy Recommendation</h3>
-                  </div>
-                  {loadingInsights ? (
-                    <div className="flex items-center space-x-3">
-                      <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
-                      <p className="text-gray-600">Generating AI insights...</p>
-                    </div>
-                  ) : aiPolicyRecommendation ? (
-                    <p className="text-gray-700 leading-relaxed">{aiPolicyRecommendation}</p>
-                  ) : (
-                    <p className="text-gray-500 italic">AI insights will appear after simulation completes.</p>
-                  )}
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">💡 Policy Recommendation</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {simulationResults.summary.gini.mean > baselineMetrics.giniCoefficient ? (
+                      <>This policy combination <strong>increases inequality</strong> by {((simulationResults.summary.gini.mean - baselineMetrics.giniCoefficient) / baselineMetrics.giniCoefficient * 100).toFixed(1)}%. Consider adding progressive measures like higher housing subsidies or education programs to offset regressive effects.</>
+                    ) : simulationResults.summary.income.mean < baselineMetrics.avgIncome ? (
+                      <>While inequality improves, average income declines by ${((baselineMetrics.avgIncome - simulationResults.summary.income.mean) / 1000).toFixed(1)}k. Consider balancing wage policies with employment support to maintain income levels.</>
+                    ) : (
+                      <>This policy combination shows <strong>positive results</strong> with income increasing to ${(simulationResults.summary.income.mean / 1000).toFixed(1)}k and inequality decreasing by {((baselineMetrics.giniCoefficient - simulationResults.summary.gini.mean) / baselineMetrics.giniCoefficient * 100).toFixed(1)}%. The trade-offs appear balanced.</>
+                    )}
+                  </p>
                 </div>
-
-                {/* 🆕 AI ENVIRONMENTAL INSIGHTS */}
-                {aiEnvironmentalInsights && (
-                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl shadow-lg p-6 border-l-4 border-green-600">
-                    <div className="flex items-center mb-3">
-                      <Leaf className="w-6 h-6 text-green-600 mr-2" />
-                      <h3 className="text-xl font-bold text-gray-900">Environmental Impact Analysis</h3>
-                    </div>
-                    <p className="text-gray-700 leading-relaxed">{aiEnvironmentalInsights}</p>
-                  </div>
-                )}
               </>
             ) : (
               <div className="bg-white rounded-xl shadow-lg p-12 text-center">
