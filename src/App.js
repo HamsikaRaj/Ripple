@@ -1487,7 +1487,9 @@ const FairSimExplorer = () => {
                           <Sparkles className="w-5 h-5 text-purple-600 mr-2" />
                           <h4 className="font-bold text-gray-900">AI Equity Insights</h4>
                         </div>
-                        <p className="text-gray-700 leading-relaxed">{aiEquityInsights}</p>
+                        <div className="text-gray-700 leading-relaxed" style={{whiteSpace: 'pre-line'}}>
+                          {aiEquityInsights.replace(/\*\*/g, '')}
+                        </div>
                       </div>
                     )}
                     

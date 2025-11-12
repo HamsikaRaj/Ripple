@@ -1,7 +1,7 @@
 // geminiService.js - Gemini API Integration for FairSim Policy Insights
 
-const GEMINI_API_KEY = 'AIzaSyDh524HLfa0vb2jffe2NCXvfCe227Ufpdo'; // Replace with your actual API key
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY; // Replace with your actual API key
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 /**
  * Generate policy recommendations using Gemini AI
@@ -67,12 +67,40 @@ Keep it concise and actionable.`;
     }
 
     const data = await response.json();
+    console.log('Gemini API full response:', JSON.stringify(data, null, 2)); // ADD THIS LINE
     
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
-    } else {
-      throw new Error('Unexpected response format from Gemini API');
+    // Check for error response
+    if (data.error) {
+      throw new Error(data.error.message || 'Gemini API error');
     }
+    
+    // Try multiple response formats
+    if (data.candidates && data.candidates.length > 0) {
+      const candidate = data.candidates[0];
+      
+      // Format 1: candidate.content.parts[0].text
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        return candidate.content.parts[0].text;
+      }
+      
+      // Format 2: candidate.text
+      if (candidate.text) {
+        return candidate.text;
+      }
+      
+      // Format 3: candidate.output
+      if (candidate.output) {
+        return candidate.output;
+      }
+    }
+    
+    // Last resort: check if there's a direct text field
+    if (data.text) {
+      return data.text;
+    }
+    
+    console.error('Unexpected Gemini API response:', data);
+    throw new Error('Unexpected response format from Gemini API');
   } catch (error) {
     console.error('Error generating policy recommendation:', error);
     // Fallback to basic analysis if API fails
@@ -88,16 +116,20 @@ Keep it concise and actionable.`;
  */
 export const generateEquityInsights = async (equityAnalysis, baselineMetrics) => {
   try {
-    const prompt = `You are an equity policy analyst. Analyze the following demographic impacts and provide 2-3 sentences highlighting the most important equity concerns or successes.
+    const prompt = `You are an equity policy analyst. Analyze the following demographic impacts and provide a brief analysis with clear sections.
+
+Format your response like this:
+**Overall Assessment:** [1-2 sentences on whether policy is progressive/regressive]
+
+**Income Disparities:** [Key findings about income bracket impacts]
+
+**Recommendation:** [One specific suggestion to improve equity]
+
+Keep it concise - about 4-5 sentences total.
 
 **Impact by Income Bracket:**
 ${equityAnalysis.byIncomeBracket.map(item => 
   `- ${item.bracket}: ${item.avgIncomeChange > 0 ? '+' : ''}$${(item.avgIncomeChange / 1000).toFixed(1)}k (${item.percentChange.toFixed(1)}%)`
-).join('\n')}
-
-**Impact by Race/Ethnicity:**
-${equityAnalysis.byRace.map(item => 
-  `- ${item.race}: ${item.avgIncomeChange > 0 ? '+' : ''}$${(item.avgIncomeChange / 1000).toFixed(1)}k (${item.percentChange.toFixed(1)}%)`
 ).join('\n')}
 
 **Impact by Employment Sector:**
@@ -132,12 +164,40 @@ Focus on: 1) Which groups benefit most/least, 2) Any concerning disparities, 3) 
     }
 
     const data = await response.json();
+    console.log('Gemini API full response:', JSON.stringify(data, null, 2)); // ADD THIS LINE
     
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
-    } else {
-      throw new Error('Unexpected response format from Gemini API');
+    // Check for error response
+    if (data.error) {
+      throw new Error(data.error.message || 'Gemini API error');
     }
+    
+    // Try multiple response formats
+    if (data.candidates && data.candidates.length > 0) {
+      const candidate = data.candidates[0];
+      
+      // Format 1: candidate.content.parts[0].text
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        return candidate.content.parts[0].text;
+      }
+      
+      // Format 2: candidate.text
+      if (candidate.text) {
+        return candidate.text;
+      }
+      
+      // Format 3: candidate.output
+      if (candidate.output) {
+        return candidate.output;
+      }
+    }
+    
+    // Last resort: check if there's a direct text field
+    if (data.text) {
+      return data.text;
+    }
+    
+    console.error('Unexpected Gemini API response:', data);
+    throw new Error('Unexpected response format from Gemini API');
   } catch (error) {
     console.error('Error generating equity insights:', error);
     return generateFallbackEquityInsights(equityAnalysis);
@@ -194,12 +254,39 @@ Highlight: 1) Overall environmental impact, 2) Most effective policy lever.`;
     }
 
     const data = await response.json();
-    
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
-    } else {
-      throw new Error('Unexpected response format from Gemini API');
+    console.log('Gemini API full response:', JSON.stringify(data, null, 2)); // ADD THIS LINE
+    // Check for error response
+    if (data.error) {
+      throw new Error(data.error.message || 'Gemini API error');
     }
+    
+    // Try multiple response formats
+    if (data.candidates && data.candidates.length > 0) {
+      const candidate = data.candidates[0];
+      
+      // Format 1: candidate.content.parts[0].text
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        return candidate.content.parts[0].text;
+      }
+      
+      // Format 2: candidate.text
+      if (candidate.text) {
+        return candidate.text;
+      }
+      
+      // Format 3: candidate.output
+      if (candidate.output) {
+        return candidate.output;
+      }
+    }
+    
+    // Last resort: check if there's a direct text field
+    if (data.text) {
+      return data.text;
+    }
+    
+    console.error('Unexpected Gemini API response:', data);
+    throw new Error('Unexpected response format from Gemini API');
   } catch (error) {
     console.error('Error generating environmental insights:', error);
     return generateFallbackEnvironmentalInsights(simulationResults, baselineMetrics);

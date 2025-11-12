@@ -788,3 +788,16 @@ ol {
 svg text {
   font-size: 12px;
 }
+
+/* Better formatting for AI insights */
+.ai-insight-text {
+  white-space: pre-line;
+  line-height: 1.8;
+}
+
+.ai-insight-text strong {
+  display: block;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
